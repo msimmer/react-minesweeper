@@ -6,6 +6,7 @@ type Column = {
   bomb: boolean
   edges: number
   reveal: boolean
+  regioned: boolean
 }
 
 type Row = Column[]
@@ -31,14 +32,65 @@ class App extends React.Component {
     size: 12,
   }
 
+  regions: any[] = []
+
   componentWillMount() {
     this.reset()
+  }
+
+  getRegions = (rows: Rows, indices: number[], regionIndex: number): Rows => {
+    const [rowIndex, columnIndex] = indices
+    const current: Column = rows[rowIndex][columnIndex]
+
+    current.regioned = true
+
+    if (current.bomb || current.edges > 0) return rows
+
+    if (!this.regions[regionIndex]) this.regions[regionIndex] = []
+    this.regions[regionIndex].push(current)
+
+    let node: MaybeColumn = null
+
+    // get blanks
+    // prettier-ignore
+    if ((node = this.blank2(rows, rowIndex + 1, columnIndex))) this.getRegions(rows, [rowIndex + 1, columnIndex],regionIndex) // below
+    // prettier-ignore
+    if ((node = this.blank2(rows, rowIndex - 1, columnIndex))) this.getRegions(rows, [rowIndex - 1, columnIndex],regionIndex) // above
+    // prettier-ignore
+    if ((node = this.blank2(rows, rowIndex, columnIndex + 1))) this.getRegions(rows, [rowIndex, columnIndex + 1],regionIndex) // right
+    // prettier-ignore
+    if ((node = this.blank2(rows, rowIndex, columnIndex - 1))) this.getRegions(rows, [rowIndex, columnIndex - 1],regionIndex) // left
+
+    // then dilate, will probably want to flag edges here, or collect any nodes
+    // that might overlap other regions
+
+    // continue until all regions are accounted for,
+
+    // then resolve overlap
+
+    // then count remaining tiles that will require a single click
+
+    // reveal the first tile that is touching a bomb on either side and
+    // diagonally
+    // if ((node = this.edge(rows, rowIndex + 1, columnIndex))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex - 1, columnIndex))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex, columnIndex + 1))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex, columnIndex - 1))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex + 1, columnIndex + 1))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex - 1, columnIndex - 1))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex - 1, columnIndex + 1))) node.reveal = true
+    // if ((node = this.edge(rows, rowIndex + 1, columnIndex - 1))) node.reveal = true
+
+    return rows
   }
 
   reset = (): void => {
     const { size } = this.state
     const rows: Rows = this.getRows(size)
-    this.setState({ rows })
+    this.setState({ rows }, () => {
+      this.getRegions(rows, [0, 0], 0)
+      console.log(this.regions)
+    })
   }
 
   setBombs = (rows: Rows, size: number): Rows => {
@@ -69,7 +121,7 @@ class App extends React.Component {
 
   getRows = (size: number): Rows => {
     const { bombs } = this.state
-    const column: Column = { bomb: false, edges: 0, reveal: false }
+    const column: Column = { bomb: false, edges: 0, reveal: false, regioned: false }
     const rows: Rows = []
 
     // create empty rows
@@ -89,15 +141,11 @@ class App extends React.Component {
   }
 
   die = (): void => {
-    setTimeout(() => {
-      if (confirm('You died 💣 Play again?')) this.reset()
-    }, 0)
+    if (confirm('You died 💣 Play again?')) this.reset()
   }
 
   win = (): void => {
-    setTimeout(() => {
-      if (confirm('You won ! 🎉 Play again?')) this.reset()
-    }, 0)
+    if (confirm('You won ! 🎉 Play again?')) this.reset()
   }
 
   // if a node exists
@@ -110,6 +158,9 @@ class App extends React.Component {
   // if a node has no edges touching a bomb
   blank = (rows: Rows, row: number, col: number): MaybeColumn =>
     this.exists(rows, row, col) && this.hidden(rows, row, col) && rows[row][col].edges < 1 ? rows[row][col] : null
+
+  blank2 = (rows: Rows, row: number, col: number): MaybeColumn =>
+    this.exists(rows, row, col) && rows[row][col].regioned !== true && rows[row][col].edges < 1 ? rows[row][col] : null
 
   // if a node is touching a bomb
   edge = (rows: Rows, row: number, col: number): MaybeColumn =>
@@ -139,7 +190,7 @@ class App extends React.Component {
     if ((node = this.blank(rows, rowIndex, columnIndex + 1))) this.reveal(rows, [rowIndex, columnIndex + 1]) // right
     if ((node = this.blank(rows, rowIndex, columnIndex - 1))) this.reveal(rows, [rowIndex, columnIndex - 1]) // left
 
-    // reveal the first tile that is touching a bomb orthagonally or diagonally
+    // reveal the first tile that is touching a bomb on either side and diagonally
     if ((node = this.edge(rows, rowIndex + 1, columnIndex))) node.reveal = true
     if ((node = this.edge(rows, rowIndex - 1, columnIndex))) node.reveal = true
     if ((node = this.edge(rows, rowIndex, columnIndex + 1))) node.reveal = true
@@ -180,7 +231,7 @@ class App extends React.Component {
                 <div key={`${i}-${j}`} className="column">
                   <button
                     onClick={this.handleClick([i, j])}
-                    className={classNames('button', { reveal: column.reveal } /* , { bomb: column.bomb } */)}
+                    className={classNames('button', { reveal: column.reveal }, { bomb: column.bomb })}
                   >
                     {column.reveal && column.bomb && '💣'}
                     {(column.reveal && !column.bomb && column.edges && column.edges) || ''}
