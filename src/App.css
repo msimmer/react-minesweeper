@@ -1,33 +1,63 @@
-.App {
-  text-align: center;
-}
+/* body {
+  background: black;
+} */
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-  pointer-events: none;
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.page {
+  height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.grid {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.column {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+button {
+  outline: none;
+}
+
+.button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  height: 100%;
+  width: 100%;
+  background-color: #ddd;
+  -webkit-appearance: none;
+  border: 2px solid;
+  border-top-color: #eee;
+  border-right-color: #aaa;
+  border-left-color: #eee;
+  border-bottom-color: #aaa;
+}
+
+.button:hover {
+  background-color: #ccc;
+}
+
+.button.reveal {
+  background-color: white;
+  border: 2px solid #eee;
+}
+
+.button.bomb {
+  background-color: blue;
 }
