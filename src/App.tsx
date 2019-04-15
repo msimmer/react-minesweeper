@@ -1,17 +1,8 @@
 import React from 'react'
-import classNames from 'classnames'
-import { Column, MaybeColumn, Row, Rows, Regions, Indices, Status, State } from './types'
+import { Column, MaybeColumn, Rows, Regions, Indices, State } from './types'
+import Board from './Board'
+import { statuses } from './constants'
 import './App.css'
-
-const statuses: {
-  READY: number
-  WIN: number
-  LOSE: number
-} = {
-  READY: 0,
-  WIN: 1,
-  LOSE: 2,
-}
 
 // get integer between min and max exclusive of max
 const random = (min: number, max: number): number => {
@@ -19,56 +10,6 @@ const random = (min: number, max: number): number => {
   const max_: number = Math.floor(max)
   return Math.floor(Math.random() * (max_ - min_)) + min_
 }
-
-const Header = (props: { bombs: number; flags: number; handleReset: () => void; status: Status }) => {
-  return (
-    <header>
-      <div className="flags">{props.flags}</div>
-      <button className="status" onClick={props.handleReset}>
-        {props.status === statuses.READY ? '😃' : props.status === statuses.WIN ? '😎' : '🙁'}
-      </button>
-      <div className="timer" />
-    </header>
-  )
-}
-
-const Board = (props: {
-  bombs: number
-  flags: number
-  rows: Rows
-  handleClick: (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
-  handleReset: () => void
-  status: Status
-}) => (
-  <div className="board">
-    <Header handleReset={props.handleReset} bombs={props.bombs} flags={props.flags} status={props.status} />
-    <div className="grid">
-      {props.rows.map((row: Row, i) => (
-        <div key={i} className="row">
-          {row.map((column: Column, j) => (
-            <div key={`${i}-${j}`} className="column">
-              <button
-                onClick={props.handleClick([i, j])}
-                className={classNames(
-                  'button',
-                  { show: column.show },
-                  { flag: column.flag },
-                  // { bomb: column.bomb },
-                  { bomb: props.status !== statuses.READY && column.bomb },
-                  { inactive: props.status !== statuses.READY },
-                )}
-              >
-                {column.flag && '⛳'}
-                {(column.show || props.status !== statuses.READY) && column.bomb && '💣'}
-                {(column.show && !column.bomb && column.edges && column.edges) || ''}
-              </button>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  </div>
-)
 
 class App extends React.Component {
   state: State = {

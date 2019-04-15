@@ -1,0 +1,177 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+}
+
+div {
+  position: relative;
+}
+
+.number {
+  width: 21px;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.number div {
+  flex: 1 0 33.33333%;
+  background-color: red;
+}
+
+.number .top-left,
+.number .top-right,
+.number .bottom-left,
+.number .bottom-right {
+  flex: 0 0 4px;
+}
+.number .top-left::before,
+.number .top-right::before,
+.number .bottom-left::before,
+.number .bottom-right::before {
+  content: '';
+  display: block;
+  position: absolute;
+  height: 0;
+  width: 0;
+  left: 0;
+  top: -4px;
+  background-color: transparent;
+  border-top: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-bottom: 2px solid red;
+}
+.number .top-left::after,
+.number .top-right::after,
+.number .bottom-left::after,
+.number .bottom-right::after {
+  content: '';
+  display: block;
+  position: absolute;
+  height: 0;
+  width: 0;
+  background-color: transparent;
+  border-top: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-top: 2px solid red;
+  left: 0;
+  bottom: -4px;
+}
+
+.number .top-left,
+.number .top-right {
+  height: 10px;
+  margin: 5px 0 1px;
+}
+
+.number .bottom-left,
+.number .bottom-right {
+  height: 10px;
+  margin: 1px 0 5px;
+}
+
+.number .mid {
+  background-color: red;
+  flex: 0 0 calc(100% - 8px);
+  border: 0;
+  height: 4px;
+  margin: 0 4px;
+}
+
+.number .top,
+.number .bottom {
+  background-color: red;
+  flex: 1 1 calc(100% - 16px);
+  border: 0;
+  height: 4px;
+  align-self: flex-start;
+}
+
+.number .top::before,
+.number .mid::before,
+.number .bottom::before {
+  content: '';
+  display: block;
+  position: absolute;
+  height: 0;
+  width: 0;
+  background-color: transparent;
+  border-top: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-right: 2px solid red;
+  left: -4px;
+  top: 0;
+}
+.number .top::after,
+.number .mid::after,
+.number .bottom::after {
+  content: '';
+  display: block;
+  position: absolute;
+  height: 0;
+  width: 0;
+  background-color: transparent;
+  border-top: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-left: 2px solid red;
+  right: -4px;
+  top: 0;
+}
+
+.number .top {
+  align-self: flex-start;
+}
+
+.number .bottom {
+  align-self: flex-end;
+}
+
+.number.zero .mid {
+  opacity: 0;
+}
+.number.one .top-left,
+.number.one .top,
+.number.one .mid,
+.number.one .bottom-left,
+.number.one .bottom {
+  opacity: 0;
+}
+.number.two .top-left,
+.number.two .bottom-right {
+  opacity: 0;
+}
+.number.three .top-left,
+.number.three .bottom-left {
+  opacity: 0;
+}
+.number.four .top,
+.number.four .bottom-left,
+.number.four .bottom {
+  opacity: 0;
+}
+.number.five .top-right,
+.number.five .bottom-left {
+  opacity: 0;
+}
+.number.six .top-right {
+  opacity: 0;
+}
+.number.seven .top-left,
+.number.seven .mid,
+.number.seven .bottom-left,
+.number.seven .bottom {
+  opacity: 0;
+}
+.number.nine .bottom-left {
+  opacity: 0;
+}
