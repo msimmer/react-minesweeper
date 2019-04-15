@@ -19,7 +19,7 @@ const toHuman = (num: string): string => {
   return nums[num]
 }
 
-const Screen = (props: { count: number }): JSX.Element => {
+const Screen = (props: { count: number | string }): JSX.Element => {
   const nums: string[] = String(props.count)
     .split('')
     .map(toHuman)
@@ -41,16 +41,20 @@ const Screen = (props: { count: number }): JSX.Element => {
   )
 }
 
-const Header = (props: { bombs: number; flags: number; handleReset: () => void; status: Status }) => {
+const Header = (props: { bombs: number; flags: number; handleReset: () => void; status: Status; time: number }) => {
+  const { flags, status, time } = props
+  const count: string = String(time).padStart(3, '0')
   return (
     <header>
       <div className="flags">
-        <Screen count={props.flags} />
+        <Screen count={flags} />
       </div>
       <button className="status" onClick={props.handleReset}>
-        {props.status === statuses.READY ? '😃' : props.status === statuses.WIN ? '😎' : '🙁'}
+        {status === statuses.READY ? '😃' : status === statuses.WIN ? '😎' : '🙁'}
       </button>
-      <div className="timer" />
+      <div className="timer">
+        <Screen count={count} />
+      </div>
     </header>
   )
 }

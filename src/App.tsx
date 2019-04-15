@@ -1,5 +1,5 @@
 import React from 'react'
-import { Column, MaybeColumn, Rows, Regions, Indices, State } from './types'
+import { Column, MaybeColumn, Row, Rows, Regions, Indices, State } from './types'
 import Board from './Board'
 import { statuses } from './constants'
 import './App.css'
@@ -11,19 +11,44 @@ const random = (min: number, max: number): number => {
   return Math.floor(Math.random() * (max_ - min_)) + min_
 }
 
-class App extends React.Component {
-  state: State = {
+class MineSweeper extends React.Component {
+  static defaultProps: State = {
     bbbv: 0,
     bombs: 12,
     flags: 12,
     rows: [],
     size: 12,
     status: statuses.READY,
+    start: 0,
+    time: 0,
+    timer: undefined,
   }
+
+  state: State = { ...MineSweeper.defaultProps }
 
   componentWillMount() {
     this.reset()
   }
+
+  getTime = (): void => {
+    const { start, timer } = this.state
+    if (!timer) return
+
+    const time: State['time'] = Math.floor((Date.now() - start) / 1000)
+    if (time > 999) return
+
+    this.setState({ time })
+  }
+
+  // start the timer
+  start = (): { start: number; timer: State['timer'] } => {
+    const start: State['start'] = Date.now()
+    const timer: State['timer'] = window.setInterval(this.getTime.bind(this), 1000)
+    return { start, timer }
+  }
+
+  // stop the timer
+  stop = (): void => window.clearInterval(this.state.timer)
 
   setRegion = (rows: Rows, [row, col]: Indices, region: number): MaybeColumn => {
     // get the current node if it exists and set its region
@@ -61,7 +86,7 @@ class App extends React.Component {
   // the 3BV (http://www.stephan-bechtel.de/3bv.htm). we break the board down
   // into regions that would be revealed when a blank tile is clicked, also
   // accounting for tiles that that share an edge with blank tiles
-  getRegions = (rows: Rows, indices: Indices = [0, 0], regionIndex: number = 0): number => {
+  getRegions = (rows: Rows, indices: Indices = [0, 0], regionIndex: number = 0): State['bbbv'] => {
     const { bombs, size } = this.state
     const count: Regions = {}
 
@@ -83,17 +108,17 @@ class App extends React.Component {
     }
 
     // minimum clicks required to clear all blanks
-    const blanks = Object.keys(count).length
+    const blanks: number = Object.keys(count).length
 
     // number of tiles that are either blank or would be revealed by clicking a
     // blank beside it
-    const dilated = Object.values(count).reduce((acc: number, curr: number) => acc + curr, 0)
+    const dilated: number = Object.values(count).reduce((acc: number, curr: number) => acc + curr, 0)
 
     // remaining tiles that require a single click to reveal
-    const remains = size - dilated - bombs
+    const remains: number = size - dilated - bombs
 
     // minimum required clicks to clear the board
-    const bbbv = blanks + remains
+    const bbbv: State['bbbv'] = blanks + remains
 
     return bbbv
   }
@@ -101,8 +126,9 @@ class App extends React.Component {
   reset = (): void => {
     const { size } = this.state
     const rows: Rows = this.getRows(size)
-    const bbbv: number = this.getRegions(rows)
-    this.setState({ flags: 12, bbbv, rows, status: statuses.READY })
+    const bbbv: State['bbbv'] = this.getRegions(rows)
+    this.stop()
+    this.setState({ ...MineSweeper.defaultProps, bbbv, rows })
   }
 
   setBombs = (rows: Rows, size: number): Rows => {
@@ -131,7 +157,7 @@ class App extends React.Component {
 
     // create empty rows
     for (let i = 0; i < size; i++) {
-      const columns = new Array(size)
+      const columns: Row = new Array(size)
       for (let j = 0; j < size; j++) {
         columns[j] = { ...column }
       }
@@ -146,10 +172,12 @@ class App extends React.Component {
   }
 
   die = (): void => {
+    this.stop()
     this.setState({ status: statuses.LOSE })
   }
 
   win = (): void => {
+    this.stop()
     this.setState({ status: statuses.WIN })
   }
 
@@ -222,10 +250,8 @@ class App extends React.Component {
       [row, col - 1], // left
     ]
 
-    let node: MaybeColumn = null
-    let coords: Indices | undefined
-
     // recursively call reveal while blank tiles have edges against the selected tile
+    let coords: Indices | undefined
     while ((coords = matrix.shift())) {
       if (this.blank(rows, coords)) this.reveal(rows, coords)
     }
@@ -241,7 +267,7 @@ class App extends React.Component {
   // check to see if user wins
   validate = (): void => {
     const { bombs, rows, size } = this.state
-    const revealed = rows.reduce(
+    const revealed: number = rows.reduce(
       (acc1, curr1) => acc1 + curr1.reduce((acc2, curr2) => (acc2 += curr2.reveal ? 1 : 0), 0),
       0,
     )
@@ -251,22 +277,25 @@ class App extends React.Component {
 
   handleClick = (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
     const { rows, status } = this.state
-    let { flags } = this.state
+    let { start, timer, flags } = this.state
     const [row, col] = indices
     const node: Column = rows[row][col]
 
     // don't keep clicking after game is done
     if (status !== statuses.READY) return
 
+    // get the start time and timer index from start method
+    if (!timer) ({ start, timer } = this.start())
+
     // trying to drop a flag but none remaining, noop
     if (e.shiftKey && flags < 1) return
 
     // drop a flag
-    if (e.shiftKey) {
-      const flagged = !node.flag
+    if (e.shiftKey && this.hidden(rows, indices)) {
+      const flagged: boolean = !node.flag
       node.flag = flagged
       flags += flagged ? -1 : 1
-      return this.setState({ flags, rows })
+      return this.setState({ flags, rows, start, timer })
     }
 
     // don't handle click for flagged tiles
@@ -283,7 +312,7 @@ class App extends React.Component {
       this.reveal(rows, indices)
     }
 
-    this.setState({ rows }, this.validate)
+    this.setState({ rows, start, timer }, this.validate)
   }
 
   render(): JSX.Element {
@@ -295,4 +324,4 @@ class App extends React.Component {
   }
 }
 
-export default App
+export default MineSweeper

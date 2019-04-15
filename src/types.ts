@@ -30,4 +30,7 @@ export type State = {
   rows: Rows
   size: number
   status: Status
+  start: number
+  timer: number | undefined
+  time: number
 }
