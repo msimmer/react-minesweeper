@@ -1,30 +1,7 @@
 import React from 'react'
 import classNames from 'classnames'
+import { Column, MaybeColumn, Row, Rows, Regions, Indices, Status, State } from './types'
 import './App.css'
-
-type Column = {
-  bomb: boolean
-  edges: number
-  flag: boolean
-  reveal: boolean
-  region: number | null
-}
-
-type Row = Column[]
-type Rows = Row[]
-type MaybeColumn = Column | null
-
-type Regions = {
-  [name: string]: number
-}
-
-type Indices = [number, number]
-
-enum Status {
-  ready,
-  win,
-  lose,
-}
 
 const statuses: {
   READY: number
@@ -34,15 +11,6 @@ const statuses: {
   READY: 0,
   WIN: 1,
   LOSE: 2,
-}
-
-type State = {
-  bbbv: number
-  bombs: number
-  flags: number
-  rows: Rows
-  size: number
-  status: Status
 }
 
 // get integer between min and max exclusive of max
@@ -83,15 +51,16 @@ const Board = (props: {
                 onClick={props.handleClick([i, j])}
                 className={classNames(
                   'button',
-                  { reveal: column.reveal },
+                  { show: column.show },
                   { flag: column.flag },
+                  // { bomb: column.bomb },
                   { bomb: props.status !== statuses.READY && column.bomb },
                   { inactive: props.status !== statuses.READY },
                 )}
               >
                 {column.flag && '⛳'}
-                {(column.reveal || props.status !== statuses.READY) && column.bomb && '💣'}
-                {(column.reveal && !column.bomb && column.edges && column.edges) || ''}
+                {(column.show || props.status !== statuses.READY) && column.bomb && '💣'}
+                {(column.show && !column.bomb && column.edges && column.edges) || ''}
               </button>
             </div>
           ))}
@@ -115,25 +84,32 @@ class App extends React.Component {
     this.reset()
   }
 
-  setRegion = (rows: Rows, rowIndex: number, columnIndex: number, region: number): MaybeColumn => {
+  setRegion = (rows: Rows, [row, col]: Indices, region: number): MaybeColumn => {
     // get the current node if it exists and set its region
-    let node: MaybeColumn = this.regionBlank(rows, rowIndex, columnIndex)
+    let node: MaybeColumn = this.regionBlank(rows, [row, col])
     if (!node) return node
 
     node.region = region
 
     // iterate along the X and Y axes recursively checking for blanks
-    if (this.regionBlank(rows, rowIndex + 1, columnIndex)) this.setRegion(rows, rowIndex + 1, columnIndex, region) // below
-    if (this.regionBlank(rows, rowIndex - 1, columnIndex)) this.setRegion(rows, rowIndex - 1, columnIndex, region) // above
-    if (this.regionBlank(rows, rowIndex, columnIndex + 1)) this.setRegion(rows, rowIndex, columnIndex + 1, region) // right
-    if (this.regionBlank(rows, rowIndex, columnIndex - 1)) this.setRegion(rows, rowIndex, columnIndex - 1, region) // left
+    const matrix: Indices[] = [
+      [row + 1, col], // below
+      [row - 1, col], // above
+      [row, col + 1], // right
+      [row, col - 1], // left
+    ]
+
+    let coords: Indices | undefined
+    while ((coords = matrix.shift())) {
+      if (this.regionBlank(rows, coords)) this.setRegion(rows, coords, region)
+    }
 
     // get the siblings of the current node and update their regions. we're
     // dilating the region to account for any tiles that would be revealed by
     // clicking on blank tile. we resolve any overlapping tiles (edges that
     // could be revealed by a click on different regions) by setting a flag on
     // the node and only counting it once
-    this.assign(this.regionEdge, rows, rowIndex, columnIndex, (node: Column) => (node.region = region))
+    this.assign(this.regionEdge, rows, [row, col], (node: Column) => (node.region = region))
 
     // let our loop know that successfully found a region and can increment the
     // counter
@@ -152,7 +128,7 @@ class App extends React.Component {
     let region: number = 0
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < rows[i].length; j++) {
-        const node = this.setRegion(rows, i, j, region)
+        const node = this.setRegion(rows, [i, j], region)
         if (node) region += 1
       }
     }
@@ -185,13 +161,13 @@ class App extends React.Component {
     const { size } = this.state
     const rows: Rows = this.getRows(size)
     const bbbv: number = this.getRegions(rows)
-    this.setState({ bbbv, rows, status: statuses.READY })
+    this.setState({ flags: 12, bbbv, rows, status: statuses.READY })
   }
 
   setBombs = (rows: Rows, size: number): Rows => {
-    const rowIndex: number = random(0, size)
-    const columnIndex: number = random(0, size)
-    const current: Column = rows[rowIndex][columnIndex]
+    const row: number = random(0, size)
+    const col: number = random(0, size)
+    const current: Column = rows[row][col]
 
     // try again if it's already set
     if (current.bomb === true) return this.setBombs(rows, size)
@@ -202,14 +178,14 @@ class App extends React.Component {
     let node: MaybeColumn = null
 
     // set the edges value on the adjacent nodes, including diagonals
-    this.assign(this.exists, rows, rowIndex, columnIndex, (node: Column) => (node.edges += 1))
+    this.assign(this.exists, rows, [row, col], (node: Column) => (node.edges += 1))
 
     return rows
   }
 
   getRows = (size: number): Rows => {
     const { bombs } = this.state
-    const column: Column = { bomb: false, edges: 0, flag: false, reveal: false, region: null }
+    const column: Column = { bomb: false, edges: 0, flag: false, reveal: false, region: null, show: false }
     const rows: Rows = []
 
     // create empty rows
@@ -237,23 +213,23 @@ class App extends React.Component {
   }
 
   // if a node exists
-  exists = (rows: Rows, row: number, col: number): MaybeColumn => (rows[row] && rows[row][col] ? rows[row][col] : null)
+  exists = (rows: Rows, [row, col]: Indices): MaybeColumn => (rows[row] && rows[row][col] ? rows[row][col] : null)
 
   // if a node is hidden
-  hidden = (rows: Rows, row: number, col: number): MaybeColumn =>
-    this.exists(rows, row, col) && rows[row][col].reveal === false ? rows[row][col] : null
+  hidden = (rows: Rows, [row, col]: Indices): MaybeColumn =>
+    this.exists(rows, [row, col]) && rows[row][col].reveal === false ? rows[row][col] : null
 
   // if a node has no edges touching a bomb
-  blank = (rows: Rows, row: number, col: number): MaybeColumn =>
-    this.exists(rows, row, col) && this.hidden(rows, row, col) && rows[row][col].edges < 1 ? rows[row][col] : null
+  blank = (rows: Rows, [row, col]: Indices): MaybeColumn =>
+    this.exists(rows, [row, col]) && (this.hidden(rows, [row, col]) && rows[row][col].edges < 1) ? rows[row][col] : null
 
   // if a node is touching a bomb
-  edge = (rows: Rows, row: number, col: number): MaybeColumn =>
-    this.exists(rows, row, col) && rows[row][col].edges > 0 ? rows[row][col] : null
+  edge = (rows: Rows, [row, col]: Indices): MaybeColumn =>
+    this.exists(rows, [row, col]) && rows[row][col].edges > 0 ? rows[row][col] : null
 
   // if a node is blank and has not been assigned a region
-  regionBlank = (rows: Rows, row: number, col: number): MaybeColumn =>
-    this.exists(rows, row, col) &&
+  regionBlank = (rows: Rows, [row, col]: Indices): MaybeColumn =>
+    this.exists(rows, [row, col]) &&
     rows[row][col].region === null &&
     rows[row][col].bomb === false &&
     rows[row][col].edges < 1
@@ -261,56 +237,61 @@ class App extends React.Component {
       : null
 
   // if a node is an edge and has not been assigned a region
-  regionEdge = (rows: Rows, row: number, col: number): MaybeColumn =>
-    this.exists(rows, row, col) && rows[row][col].edges > 0 && rows[row][col].region === null ? rows[row][col] : null
+  regionEdge = (rows: Rows, [row, col]: Indices): MaybeColumn =>
+    this.exists(rows, [row, col]) && rows[row][col].edges > 0 && rows[row][col].region === null ? rows[row][col] : null
 
   // utility function for assigning values to orthagonal and diagonal nodes in
-  // relation to a source node at rowIndex x columnIndex
+  // relation to a source node at row index x col index
   assign = (
-    conditional: (rows: Rows, rowIndex: number, columnIndex: number) => MaybeColumn,
+    conditional: (rows: Rows, [row, col]: Indices) => MaybeColumn,
     rows: Rows,
-    rowIndex: number,
-    columnIndex: number,
+    [row, col]: Indices,
     callback: (node: Column) => void,
   ) => {
+    const matrix: Indices[] = [
+      [row + 1, col], // orthangonals
+      [row - 1, col],
+      [row, col + 1],
+      [row, col - 1],
+      [row + 1, col + 1], // diagonals
+      [row - 1, col - 1],
+      [row + 1, col - 1],
+      [row - 1, col + 1],
+    ]
+
     let node: MaybeColumn = null
-    if ((node = conditional.call(this, rows, rowIndex + 1, columnIndex))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex - 1, columnIndex))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex, columnIndex + 1))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex, columnIndex - 1))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex + 1, columnIndex + 1))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex - 1, columnIndex - 1))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex + 1, columnIndex - 1))) callback.call(this, node)
-    if ((node = conditional.call(this, rows, rowIndex - 1, columnIndex + 1))) callback.call(this, node)
+    let coords: Indices | undefined
+    while ((coords = matrix.shift())) {
+      if ((node = conditional.call(this, rows, coords))) callback.call(this, node)
+    }
   }
 
   reveal = (rows: Rows, indices: Indices): Rows => {
-    const [rowIndex, columnIndex] = indices
-    const current: Column = rows[rowIndex][columnIndex]
+    const [row, col] = indices
+    const current: Column = rows[row][col]
 
-    // if (node && node.flag === false) node.reveal = true
     current.reveal = true
+    if (current && current.flag === false) current.show = true
 
-    if (current.bomb) {
-      this.die()
-      return rows
-    }
-
-    if (current.edges > 0) {
-      current.reveal = true
-      return rows
-    }
+    // only orthangonals
+    const matrix: Indices[] = [
+      [row + 1, col], // below
+      [row - 1, col], // above
+      [row, col + 1], // right
+      [row, col - 1], // left
+    ]
 
     let node: MaybeColumn = null
+    let coords: Indices | undefined
 
     // recursively call reveal while blank tiles have edges against the selected tile
-    if (this.blank(rows, rowIndex + 1, columnIndex)) this.reveal(rows, [rowIndex + 1, columnIndex]) // below
-    if (this.blank(rows, rowIndex - 1, columnIndex)) this.reveal(rows, [rowIndex - 1, columnIndex]) // above
-    if (this.blank(rows, rowIndex, columnIndex + 1)) this.reveal(rows, [rowIndex, columnIndex + 1]) // right
-    if (this.blank(rows, rowIndex, columnIndex - 1)) this.reveal(rows, [rowIndex, columnIndex - 1]) // left
+    while ((coords = matrix.shift())) {
+      if (this.blank(rows, coords)) this.reveal(rows, coords)
+    }
 
-    this.assign(this.edge, rows, rowIndex, columnIndex, (node: Column) => {
-      if (node && node.flag === false) node.reveal = true
+    this.assign(this.edge, rows, [row, col], (node: Column) => {
+      node.reveal = true
+      if (node && node.flag === false) node.show = true
     })
 
     return rows
@@ -333,23 +314,34 @@ class App extends React.Component {
     const [row, col] = indices
     const node: Column = rows[row][col]
 
+    // don't keep clicking after game is done
     if (status !== statuses.READY) return
+
+    // trying to drop a flag but none remaining, noop
+    if (e.shiftKey && flags < 1) return
 
     // drop a flag
     if (e.shiftKey) {
-      if (flags < 1) return
-
       const flagged = !node.flag
       node.flag = flagged
       flags += flagged ? -1 : 1
-      this.setState({ flags, rows })
-      return
+      return this.setState({ flags, rows })
     }
 
     // don't handle click for flagged tiles
     if (node.flag) return
 
-    this.reveal(rows, indices)
+    if (node.bomb) return this.die()
+
+    // edge tile
+    if (node.edges > 0) {
+      node.reveal = true
+      node.show = true
+    } else {
+      // blank tile
+      this.reveal(rows, indices)
+    }
+
     this.setState({ rows }, this.validate)
   }
 

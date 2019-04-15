@@ -84,18 +84,18 @@ button {
   border-bottom-color: #aaa;
 }
 
-button:not(.inactive):not(.reveal):not(.flag):active {
+button:not(.inactive):not(.show):not(.flag):active {
   border-top-color: #aaa;
   border-right-color: #eee;
   border-left-color: #aaa;
   border-bottom-color: #eee;
 }
 
-.button:not(.inactive):not(.reveal):hover {
+.button:not(.inactive):not(.show):hover {
   background-color: #ccc;
 }
 
-.button.reveal {
+.button.show {
   background-color: white;
   border: 2px solid #eee;
 }
