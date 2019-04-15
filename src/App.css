@@ -11,7 +11,7 @@ header {
   justify-content: space-between;
 }
 
-.counter,
+.flags,
 .status,
 .timer {
   height: 50px;
@@ -23,7 +23,7 @@ header {
   border-bottom-color: #aaa;
 }
 
-.counter {
+.flags {
   flex: 1;
   margin: 6px;
 }
@@ -84,14 +84,14 @@ button {
   border-bottom-color: #aaa;
 }
 
-button:active {
+button:not(.inactive):not(.reveal):not(.flag):active {
   border-top-color: #aaa;
   border-right-color: #eee;
   border-left-color: #aaa;
   border-bottom-color: #eee;
 }
 
-.button:hover {
+.button:not(.inactive):not(.reveal):hover {
   background-color: #ccc;
 }
 
@@ -101,5 +101,5 @@ button:active {
 }
 
 .button.bomb {
-  background-color: blue;
+  background-color: red;
 }

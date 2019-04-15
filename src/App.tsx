@@ -5,6 +5,7 @@ import './App.css'
 type Column = {
   bomb: boolean
   edges: number
+  flag: boolean
   reveal: boolean
   region: number | null
 }
@@ -19,6 +20,31 @@ type Regions = {
 
 type Indices = [number, number]
 
+enum Status {
+  ready,
+  win,
+  lose,
+}
+
+const statuses: {
+  READY: number
+  WIN: number
+  LOSE: number
+} = {
+  READY: 0,
+  WIN: 1,
+  LOSE: 2,
+}
+
+type State = {
+  bbbv: number
+  bombs: number
+  flags: number
+  rows: Rows
+  size: number
+  status: Status
+}
+
 // get integer between min and max exclusive of max
 const random = (min: number, max: number): number => {
   const min_: number = Math.ceil(min)
@@ -26,21 +52,28 @@ const random = (min: number, max: number): number => {
   return Math.floor(Math.random() * (max_ - min_)) + min_
 }
 
-const Header = (props: { handleReset: () => void }) => {
+const Header = (props: { bombs: number; flags: number; handleReset: () => void; status: Status }) => {
   return (
     <header>
-      <div className="counter" />
+      <div className="flags">{props.flags}</div>
       <button className="status" onClick={props.handleReset}>
-        😃
+        {props.status === statuses.READY ? '😃' : props.status === statuses.WIN ? '😎' : '🙁'}
       </button>
       <div className="timer" />
     </header>
   )
 }
 
-const Board = (props: { rows: Rows; handleClick: (indices: Indices) => () => void; handleReset: () => void }) => (
+const Board = (props: {
+  bombs: number
+  flags: number
+  rows: Rows
+  handleClick: (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+  handleReset: () => void
+  status: Status
+}) => (
   <div className="board">
-    <Header handleReset={props.handleReset} />
+    <Header handleReset={props.handleReset} bombs={props.bombs} flags={props.flags} status={props.status} />
     <div className="grid">
       {props.rows.map((row: Row, i) => (
         <div key={i} className="row">
@@ -48,9 +81,16 @@ const Board = (props: { rows: Rows; handleClick: (indices: Indices) => () => voi
             <div key={`${i}-${j}`} className="column">
               <button
                 onClick={props.handleClick([i, j])}
-                className={classNames('button', { reveal: column.reveal } /* , { bomb: column.bomb } */)}
+                className={classNames(
+                  'button',
+                  { reveal: column.reveal },
+                  { flag: column.flag },
+                  { bomb: props.status !== statuses.READY && column.bomb },
+                  { inactive: props.status !== statuses.READY },
+                )}
               >
-                {column.reveal && column.bomb && '💣'}
+                {column.flag && '⛳'}
+                {(column.reveal || props.status !== statuses.READY) && column.bomb && '💣'}
                 {(column.reveal && !column.bomb && column.edges && column.edges) || ''}
               </button>
             </div>
@@ -62,16 +102,13 @@ const Board = (props: { rows: Rows; handleClick: (indices: Indices) => () => voi
 )
 
 class App extends React.Component {
-  state: {
-    bbbv: number
-    bombs: number
-    rows: Rows
-    size: number
-  } = {
+  state: State = {
     bbbv: 0,
     bombs: 12,
+    flags: 12,
     rows: [],
     size: 12,
+    status: statuses.READY,
   }
 
   componentWillMount() {
@@ -148,7 +185,7 @@ class App extends React.Component {
     const { size } = this.state
     const rows: Rows = this.getRows(size)
     const bbbv: number = this.getRegions(rows)
-    this.setState({ bbbv, rows })
+    this.setState({ bbbv, rows, status: statuses.READY })
   }
 
   setBombs = (rows: Rows, size: number): Rows => {
@@ -172,7 +209,7 @@ class App extends React.Component {
 
   getRows = (size: number): Rows => {
     const { bombs } = this.state
-    const column: Column = { bomb: false, edges: 0, reveal: false, region: null }
+    const column: Column = { bomb: false, edges: 0, flag: false, reveal: false, region: null }
     const rows: Rows = []
 
     // create empty rows
@@ -192,11 +229,11 @@ class App extends React.Component {
   }
 
   die = (): void => {
-    if (confirm('You died 💣 Play again?')) this.reset()
+    this.setState({ status: statuses.LOSE })
   }
 
   win = (): void => {
-    if (confirm('You won ! 🎉 Play again?')) this.reset()
+    this.setState({ status: statuses.WIN })
   }
 
   // if a node exists
@@ -251,6 +288,7 @@ class App extends React.Component {
     const [rowIndex, columnIndex] = indices
     const current: Column = rows[rowIndex][columnIndex]
 
+    // if (node && node.flag === false) node.reveal = true
     current.reveal = true
 
     if (current.bomb) {
@@ -271,7 +309,9 @@ class App extends React.Component {
     if (this.blank(rows, rowIndex, columnIndex + 1)) this.reveal(rows, [rowIndex, columnIndex + 1]) // right
     if (this.blank(rows, rowIndex, columnIndex - 1)) this.reveal(rows, [rowIndex, columnIndex - 1]) // left
 
-    this.assign(this.edge, rows, rowIndex, columnIndex, (node: Column) => (node.reveal = true))
+    this.assign(this.edge, rows, rowIndex, columnIndex, (node: Column) => {
+      if (node && node.flag === false) node.reveal = true
+    })
 
     return rows
   }
@@ -287,17 +327,36 @@ class App extends React.Component {
     if (size ** 2 - bombs === revealed) this.win()
   }
 
-  handleClick = (indices: Indices) => (): void => {
-    const { rows } = this.state
+  handleClick = (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
+    const { rows, status } = this.state
+    let { flags } = this.state
+    const [row, col] = indices
+    const node: Column = rows[row][col]
+
+    if (status !== statuses.READY) return
+
+    // drop a flag
+    if (e.shiftKey) {
+      if (flags < 1) return
+
+      const flagged = !node.flag
+      node.flag = flagged
+      flags += flagged ? -1 : 1
+      this.setState({ flags, rows })
+      return
+    }
+
+    // don't handle click for flagged tiles
+    if (node.flag) return
+
     this.reveal(rows, indices)
     this.setState({ rows }, this.validate)
   }
 
   render(): JSX.Element {
-    const { rows } = this.state
     return (
       <div className="page">
-        <Board rows={rows} handleClick={this.handleClick} handleReset={this.reset} />
+        <Board handleClick={this.handleClick} handleReset={this.reset} {...this.state} />
       </div>
     )
   }
