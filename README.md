@@ -4,6 +4,8 @@
 
 Minesweeper in Typescript + React. Includes four different difficulty levels and calculates score according to [3BV](http://www.stephan-bechtel.de/3bv.htm).
 
+[**Demo**](https://msimmer.github.io/react-minesweeper/)
+
 ## Install
 
 ```
