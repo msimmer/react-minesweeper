@@ -2,11 +2,14 @@
   "name": "react-minesweeper",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://github.com/msimmer/react-minesweeper",
   "dependencies": {
+    "@types/classnames": "^2.2.7",
     "@types/jest": "24.0.11",
     "@types/node": "11.13.4",
     "@types/react": "16.8.13",
     "@types/react-dom": "16.8.4",
+    "classnames": "^2.2.6",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "2.1.8",
@@ -16,7 +19,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "gh-pages -d build",
+    "deploy": "yarn build"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -28,7 +33,6 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "@types/classnames": "^2.2.7",
-    "classnames": "^2.2.6"
+    "gh-pages": "^2.0.1"
   }
 }
