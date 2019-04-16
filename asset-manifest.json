@@ -1,13 +1,13 @@
 {
-  "main.css": "/static/css/main.08b983c9.chunk.css",
-  "main.js": "/static/js/main.9d87c0e3.chunk.js",
-  "main.js.map": "/static/js/main.9d87c0e3.chunk.js.map",
-  "runtime~main.js": "/static/js/runtime~main.c5541365.js",
-  "runtime~main.js.map": "/static/js/runtime~main.c5541365.js.map",
-  "static/js/2.ed46d7f6.chunk.js": "/static/js/2.ed46d7f6.chunk.js",
-  "static/js/2.ed46d7f6.chunk.js.map": "/static/js/2.ed46d7f6.chunk.js.map",
-  "index.html": "/index.html",
-  "precache-manifest.522ba860c01a4227fc08f37ac6f854c2.js": "/precache-manifest.522ba860c01a4227fc08f37ac6f854c2.js",
-  "service-worker.js": "/service-worker.js",
-  "static/css/main.08b983c9.chunk.css.map": "/static/css/main.08b983c9.chunk.css.map"
+  "main.css": "/msimmer/react-minesweeper/static/css/main.08b983c9.chunk.css",
+  "main.js": "/msimmer/react-minesweeper/static/js/main.414a2c22.chunk.js",
+  "main.js.map": "/msimmer/react-minesweeper/static/js/main.414a2c22.chunk.js.map",
+  "runtime~main.js": "/msimmer/react-minesweeper/static/js/runtime~main.b8e80ec9.js",
+  "runtime~main.js.map": "/msimmer/react-minesweeper/static/js/runtime~main.b8e80ec9.js.map",
+  "static/js/2.ed46d7f6.chunk.js": "/msimmer/react-minesweeper/static/js/2.ed46d7f6.chunk.js",
+  "static/js/2.ed46d7f6.chunk.js.map": "/msimmer/react-minesweeper/static/js/2.ed46d7f6.chunk.js.map",
+  "index.html": "/msimmer/react-minesweeper/index.html",
+  "precache-manifest.d4640827c83fc9dd0b229ee0c239783d.js": "/msimmer/react-minesweeper/precache-manifest.d4640827c83fc9dd0b229ee0c239783d.js",
+  "service-worker.js": "/msimmer/react-minesweeper/service-worker.js",
+  "static/css/main.08b983c9.chunk.css.map": "/msimmer/react-minesweeper/static/css/main.08b983c9.chunk.css.map"
 }
