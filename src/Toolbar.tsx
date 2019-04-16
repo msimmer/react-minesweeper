@@ -20,7 +20,7 @@ const ListItem = (props: {
         type="radio"
         value={levels[props.value]}
       />
-      {levels[props.value] === levels.BEAST && ' Mode' ? `${titleCase(props.value)} Mode` : titleCase(props.value)}
+      {levels[props.value] === levels.BEAST ? `${titleCase(props.value)} Mode` : titleCase(props.value)}
     </label>
   </li>
 )
