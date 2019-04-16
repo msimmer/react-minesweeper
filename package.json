@@ -2,7 +2,7 @@
   "name": "react-minesweeper",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://github.com/msimmer/react-minesweeper",
+  "homepage": "https://msimmer.github.io/react-minesweeper/",
   "dependencies": {
     "@types/classnames": "^2.2.7",
     "@types/jest": "24.0.11",
