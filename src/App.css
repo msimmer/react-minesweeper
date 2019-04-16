@@ -45,6 +45,85 @@ header {
   margin: 6px;
 }
 
+.frame {
+  padding: 6px;
+  background: #ddd;
+  border: 3px solid;
+  border-top-color: #eee;
+  border-right-color: #aaa;
+  border-left-color: #eee;
+  border-bottom-color: #aaa;
+}
+
+.toolbar {
+  height: 30px;
+  background: blue;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  user-select: none;
+}
+
+.toolbar .button {
+  flex: 0;
+  border: 0;
+  color: white;
+  font-size: 11px;
+  margin-right: 12px;
+  font-family: Verdana;
+  border-bottom: 1px solid;
+  background: transparent;
+}
+
+.toolbar .button.button-right {
+  margin: 0 0 0 auto;
+  flex: 0;
+  border: none;
+  width: 17px;
+  height: 17px;
+}
+
+.toolbar .button.button-right img {
+  width: 17px;
+  height: 17px;
+}
+
+.toolbar .button:hover,
+.toolbar .button:active,
+.toolbar .button:focus {
+  background: transparent !important;
+}
+
+.modal {
+  display: none;
+  position: absolute;
+  background: #ddd;
+  color: black;
+  font-size: 11px;
+  z-index: 1;
+  top: 35px;
+  border: 1px solid black;
+  left: 0;
+  padding: 6px;
+}
+
+.modal ul {
+  list-style: none;
+}
+
+.modal ul li {
+  margin: 0 0 6px;
+}
+
+.modal.visible {
+  display: block;
+}
+
+input[type='radio'] {
+  margin-right: 6px;
+}
+
 .page {
   height: 100vh;
   display: flex;

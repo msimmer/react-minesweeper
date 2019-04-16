@@ -17,10 +17,26 @@ export type Regions = {
 
 export type Indices = [number, number]
 
+export type StatusIndex = 'READY' | 'WIN' | 'LOSE'
 export enum Status {
   ready,
   win,
   lose,
+}
+
+export type ModalIndex = 'NONE' | 'OPTIONS' | 'ABOUT'
+export enum Modal {
+  none,
+  options,
+  about,
+}
+
+export type LevelIndex = 'EASY' | 'MEDIUM' | 'HARD' | 'BEAST'
+export enum Level {
+  easy,
+  medium,
+  hard,
+  beast,
 }
 
 export type State = {
@@ -33,4 +49,7 @@ export type State = {
   start: number
   timer: number | undefined
   time: number
+  modal: Modal
+  left: number
+  level: Level
 }

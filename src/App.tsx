@@ -1,7 +1,8 @@
-import React from 'react'
-import { Column, MaybeColumn, Row, Rows, Regions, Indices, State } from './types'
+import React, { ChangeEvent } from 'react'
+import { Column, MaybeColumn, Row, Rows, Regions, Indices, State, Modal, Level } from './types'
 import Board from './Board'
-import { statuses } from './constants'
+import Toolbar from './Toolbar'
+import { statuses, modals, levels } from './constants'
 import './App.css'
 
 // get integer between min and max exclusive of max
@@ -22,6 +23,9 @@ class MineSweeper extends React.Component {
     start: 0,
     time: 0,
     timer: undefined,
+    modal: modals.NONE,
+    left: 0,
+    level: levels.EASY,
   }
 
   state: State = { ...MineSweeper.defaultProps }
@@ -48,7 +52,10 @@ class MineSweeper extends React.Component {
   }
 
   // stop the timer
-  stop = (): void => window.clearInterval(this.state.timer)
+  stop = (): void => {
+    const { timer } = this.state
+    window.clearInterval(timer)
+  }
 
   setRegion = (rows: Rows, [row, col]: Indices, region: number): MaybeColumn => {
     // get the current node if it exists and set its region
@@ -86,8 +93,7 @@ class MineSweeper extends React.Component {
   // the 3BV (http://www.stephan-bechtel.de/3bv.htm). we break the board down
   // into regions that would be revealed when a blank tile is clicked, also
   // accounting for tiles that that share an edge with blank tiles
-  getRegions = (rows: Rows, indices: Indices = [0, 0], regionIndex: number = 0): State['bbbv'] => {
-    const { bombs, size } = this.state
+  getRegions = (rows: Rows, size: State['size'], bombs: State['bombs']): State['bbbv'] => {
     const count: Regions = {}
 
     // store regions as an index
@@ -124,11 +130,26 @@ class MineSweeper extends React.Component {
   }
 
   reset = (): void => {
-    const { size } = this.state
-    const rows: Rows = this.getRows(size)
-    const bbbv: State['bbbv'] = this.getRegions(rows)
+    const { level } = this.state
+    let { bombs, flags, size } = this.state
+
+    if (level === levels.EASY) {
+      bombs = flags = size = 12
+    } else if (level === levels.MEDIUM) {
+      bombs = flags = 48
+      size = 16
+    } else if (level === levels.HARD) {
+      bombs = flags = 72
+      size = 16
+    } else if (level === levels.BEAST) {
+      bombs = flags = 192
+      size = 20
+    }
+
+    const rows: Rows = this.getRows(size, bombs)
+    const bbbv: State['bbbv'] = this.getRegions(rows, size, bombs)
     this.stop()
-    this.setState({ ...MineSweeper.defaultProps, bbbv, rows })
+    this.setState({ ...MineSweeper.defaultProps, bombs, flags, size, bbbv, rows, level })
   }
 
   setBombs = (rows: Rows, size: number): Rows => {
@@ -142,16 +163,13 @@ class MineSweeper extends React.Component {
     // set the bomb value on the column
     current.bomb = true
 
-    let node: MaybeColumn = null
-
     // set the edges value on the adjacent nodes, including diagonals
     this.assign(this.exists, rows, [row, col], (node: Column) => (node.edges += 1))
 
     return rows
   }
 
-  getRows = (size: number): Rows => {
-    const { bombs } = this.state
+  getRows = (size: State['size'], bombs: State['bombs']): Rows => {
     const column: Column = { bomb: false, edges: 0, flag: false, reveal: false, region: null, show: false }
     const rows: Rows = []
 
@@ -173,12 +191,12 @@ class MineSweeper extends React.Component {
 
   die = (): void => {
     this.stop()
-    this.setState({ status: statuses.LOSE })
+    this.setState({ status: statuses.LOSE, timer: MineSweeper.defaultProps.timer })
   }
 
   win = (): void => {
     this.stop()
-    this.setState({ status: statuses.WIN })
+    this.setState({ status: statuses.WIN, timer: MineSweeper.defaultProps.timer })
   }
 
   // if a node exists
@@ -275,7 +293,7 @@ class MineSweeper extends React.Component {
     if (size ** 2 - bombs === revealed) this.win()
   }
 
-  handleClick = (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
+  handleClick = (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement>): void => {
     const { rows, status } = this.state
     let { start, timer, flags } = this.state
     const [row, col] = indices
@@ -315,10 +333,30 @@ class MineSweeper extends React.Component {
     this.setState({ rows, start, timer }, this.validate)
   }
 
+  toggleModal = (modal: Modal) => (e: React.MouseEvent<HTMLButtonElement>): void => {
+    const modal_ = this.state.modal === modal ? modals.NONE : modal
+    this.setState({ modal: modal_, left: e.currentTarget.offsetLeft })
+  }
+
+  handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const level: Level = Number(e.currentTarget.value)
+    this.setState({ level }, () => this.reset())
+  }
+
   render(): JSX.Element {
+    const { modal, left, level } = this.state
     return (
       <div className="page">
-        <Board handleClick={this.handleClick} handleReset={this.reset} {...this.state} />
+        <div className="frame">
+          <Toolbar
+            toggleModal={this.toggleModal}
+            handleChange={this.handleChange}
+            modal={modal}
+            left={left}
+            level={level}
+          />
+          <Board handleClick={this.handleClick} handleReset={this.reset} {...this.state} />
+        </div>
       </div>
     )
   }

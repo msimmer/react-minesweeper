@@ -20,7 +20,7 @@ const Board = (props: {
   bombs: number
   flags: number
   rows: Rows
-  handleClick: (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+  handleClick: (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement>) => void
   handleReset: () => void
   status: Status
   time: number
