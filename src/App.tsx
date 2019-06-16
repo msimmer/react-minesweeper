@@ -1,4 +1,5 @@
 import React, { ChangeEvent } from 'react'
+import cloneDeep from 'lodash.clonedeep'
 import { Column, MaybeColumn, Row, Rows, Regions, Indices, State, Modal, Level } from './types'
 import Board from './Board'
 import Toolbar from './Toolbar'
@@ -294,7 +295,8 @@ class MineSweeper extends React.Component {
   }
 
   handleClick = (indices: Indices) => (e: React.MouseEvent<HTMLButtonElement>): void => {
-    const { rows, status } = this.state
+    const { status } = this.state
+    const rows = cloneDeep(this.state.rows)
     let { start, timer, flags } = this.state
     const [row, col] = indices
     const node: Column = rows[row][col]
